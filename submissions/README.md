@@ -1,21 +1,22 @@
-# Windows-Use:
-### AI-Powered Agent that interacts with the Windows Desktop.
+# 🪟Windows-Use
 
-## Overview of the Idea
-Windows-Use bridges the gap between large language models (LLMs) and the Windows operating system. It enables intelligent agents to interact with Windows UI elements, such as applications, windows, and files, using native system APIs, not traditional computer vision.
+### AI Agent that interacts with the Windows Desktop just like a human.
 
-## Project Goal
-To demonstrate a powerful, lightweight system that allows LLM agents to natively control and interact with Windows system through real-time feedback. The project aims to simplify how agents interact with GUI-based operating systems, without requiring custom models or extensive setup.
+##  Overview
+Windows-Use bridges the gap between large language models (LLMs) and the Windows operating system. It enables intelligent agents to interact with Windows UI elements, such as applications, windows, and files, using native system APIs rather than traditional computer vision.
 
-## Tech Stack
-- Agno
-- Gemini (LLM)
-- Groq (TTS, STT)
-- UIAutomation
-- Pydantic
-- Pyqt6 (UI)
+## 📜 Project Goal
+To demonstrate a powerful, lightweight system that allows LLM agents to natively control and interact with the Windows system through real-time feedback. The project aims to simplify how agents interact with GUI-based operating systems, without requiring custom models or extensive setup.
 
-## Setup & Usage
+## 🧑🏾‍💻Tech Stack
+
+- **AI Framework:** Agno
+- **LLM:** Google Gemini 2.0 Flash / Claude Sonnet 4.0 (paid tier is preferred to surpass RPM limit)
+- **TTS:** Groq playai-tts
+- **STT:** Groq whisper-large-v3
+- **UI:** Pyqt6
+
+## 🏗️ Setup & Usage
 
 Clone the repository:
 ```bash
@@ -35,13 +36,15 @@ GROQ_API_KEY='<api_key_here>'
 GOOGLE_API_KEY='<api_key_here>'
 ```
 
-Run one of the following command to run the agent
-```python
+Run one of the following commands to run the agent
+```bash
 python gui.py # For GUI mode
 
 python cli.py # For CLI mode
 ```
 
-## Demo Video Link
+**⚠️CAUTION:** Agent interacts directly with your Windows OS to perform actions. While the agent is designed to act intelligently and safely, it can make mistakes that might disrupt system behaviour or cause unintended changes. 
 
-https://github.com/user-attachments/assets/eb08adad-9189-4051-83b8-3c8b4bcd4ad5
+## 🎥Demo Video
+
+https://github.com/user-attachments/assets/00c37245-b0dd-4b71-9904-1c0373f286a6

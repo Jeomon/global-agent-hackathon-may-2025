@@ -195,13 +195,16 @@ class ChatUI(QWidget):
             msg.setStandardButtons(QMessageBox.StandardButton.Ok)
             msg.show()
             QTimer.singleShot(0, lambda: msg.move(650, 190))
+            self.text_input.setPlaceholderText("How can I help you?")
+            self.text_input.setDisabled(False)
+            self.send_button.setDisabled(True)
+            self.mic_button.setDisabled(False)
+
+    def on_tts_finished(self,content:str):
         self.text_input.setPlaceholderText("How can I help you?")
         self.text_input.setDisabled(False)
         self.send_button.setDisabled(True)
         self.mic_button.setDisabled(False)
-
-    def on_tts_finished(self,content:str):
-        self.text_input.setPlaceholderText("How can I help you?")
 
     def update_style(self,widget:QWidget, property_name:str, new_value:str):
         """Update a specific CSS property without removing others."""
