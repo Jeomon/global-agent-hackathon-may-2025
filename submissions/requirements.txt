@@ -8,3 +8,5 @@ keyboard
 uiautomation
 pyautogui
 PyQt6
+pypdf
+chromadb

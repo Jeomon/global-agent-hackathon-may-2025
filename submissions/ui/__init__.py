@@ -1,11 +1,10 @@
-from PyQt6.QtWidgets import QApplication, QWidget, QHBoxLayout, QPushButton, QTextEdit, QGraphicsDropShadowEffect, QVBoxLayout, QListWidget, QListWidgetItem
-from PyQt6.QtGui import QIcon, QColor, QCursor, QKeyEvent, QTextCharFormat
-from ui.thread import STTThread,TTSThread,AgentThread
-from PyQt6.QtWidgets import QMessageBox, QFrame
+from PyQt6.QtWidgets import QApplication, QWidget, QHBoxLayout, QPushButton, QTextEdit, QGraphicsDropShadowEffect, QVBoxLayout, QFileDialog
+from PyQt6.QtGui import QIcon, QColor, QCursor, QKeyEvent, QAction
+from ui.thread import STTThread,TTSThread,AgentThread,PDFThread,URLThread
+from PyQt6.QtWidgets import QMessageBox, QFrame, QMenu, QInputDialog
 from PyQt6.QtCore import Qt, QPoint
 from PyQt6.QtCore import QTimer
 from ui.utils import resource_path
-from agno.agent import Agent
 import sys
 import os
 import re
@@ -13,6 +12,7 @@ import ctypes
 sys.path.append(os.path.dirname(__file__))
 from src.speech.speech_to_text import STT
 from src.speech.text_to_speech import TTS
+from src.agent import Agent
 
 class ChatUI(QWidget):
     def __init__(self,agent:Agent=None,stt:STT=None,tts:TTS=None):
@@ -21,13 +21,15 @@ class ChatUI(QWidget):
         self.stt=stt
         self.tts=tts
         self.is_recording=False
-        self.stt_thread=None
+        self.pdf_thread=None
+        self.url_thread=None
         self.tts_thread=None
+        self.stt_thread=None
         self.agent_thread=None
         super().__init__()
 
         self.setWindowTitle("Windows-Use")
-        self.setFixedSize(470, 80)  # ✅ Set window size slightly larger for shadow effect
+        self.setFixedSize(500, 80)  # ✅ Set window size slightly larger for shadow effect
         self.setWindowFlags(Qt.WindowType.FramelessWindowHint)
         self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
 
@@ -49,6 +51,31 @@ class ChatUI(QWidget):
         layout.setContentsMargins(0, 0, 0, 0)  # ✅ No margins
         layout.setSpacing(0)  # ✅ No spacing between widgets
 
+        # ✅ More Button
+        self.more_button = QPushButton()
+        self.more_button.setFixedSize(40, 45)
+        self.more_button.setIcon(QIcon(resource_path("./ui/assets/more.svg")))  # Add your 3-dot SVG icon here
+        self.more_button.setStyleSheet("""
+            QPushButton {
+                background-color: #E2E8F0;
+                border: none;
+                border-top-left-radius: 5px;
+                border-bottom-left-radius: 5px;
+            }
+            QPushButton:hover {
+                background-color: #CBD5E1;
+            }
+        """)
+        self.more_button.setCursor(QCursor(Qt.CursorShape.PointingHandCursor))
+        self.more_button.clicked.connect(self.dropdown_menu)
+
+        # ✅ Vertical Separator
+        self.separator = QFrame()
+        self.separator.setFrameShape(QFrame.Shape.VLine)
+        self.separator.setStyleSheet("color: #D7D8D8;")  # Light gray color
+        self.separator.setFixedHeight(45)  # Adjust height to align with buttons
+        self.separator.setLineWidth(5)
+
         # ✅ Mic Button
         self.mic_button = QPushButton()
         self.mic_button.setFixedSize(40, 45)
@@ -57,8 +84,6 @@ class ChatUI(QWidget):
             QPushButton {
                 background-color: #E2E8F0;
                 border: none;
-                border-top-left-radius: 5px;
-                border-bottom-left-radius: 5px;
             }
             QPushButton:hover {
                 background-color: #CBD5E1;
@@ -111,6 +136,8 @@ class ChatUI(QWidget):
         self.send_button.clicked.connect(self.on_send_clicked)
 
         # ✅ Add widgets inside the container
+        layout.addWidget(self.more_button)
+        layout.addWidget(self.separator)  # Add vertical separator
         layout.addWidget(self.mic_button)
         layout.addWidget(self.text_input, 1)  # Expand text input
         layout.addWidget(self.send_button)
@@ -133,7 +160,72 @@ class ChatUI(QWidget):
         shadow.setYOffset(5)
         shadow.setColor(QColor(0, 0, 0, 30))  # Black shadow with opacity
         self.container.setGraphicsEffect(shadow)  # ✅ Apply shadow to container
-    
+
+    def dropdown_menu(self):
+        menu = QMenu(self)
+        menu.setStyleSheet('''
+            QMenu { 
+                border: 1px solid #E2E8F0;
+                border-radius: 5px;
+                background-color: #F8FAFC; 
+            }
+            QMenu::item {
+                padding: 6px 12px;
+                background-color: transparent;
+            }
+            QMenu::item:selected {
+                border-radius: 5px;
+                background-color: #E2E8F0;
+                color: black;
+            }
+        ''')
+        # No shadow, flat appearance
+        # menu.setWindowFlags(menu.windowFlags() | Qt.WindowType.FramelessWindowHint)
+        # menu.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground, False)
+
+        # Add PDF action
+        pdf_action = QAction("Knowledge PDF", self)
+        pdf_action.triggered.connect(self.on_pdf_clicked)
+        menu.addAction(pdf_action)
+
+        # Add URL action
+        url_action = QAction("Knowledge URL", self)
+        url_action.triggered.connect(self.on_url_clicked)
+        menu.addAction(url_action)
+
+        # Position the menu right below the dropdown button
+        pos = self.more_button.mapToGlobal(QPoint(0, self.more_button.height()))
+        menu.exec(pos)
+
+    def on_pdf_clicked(self):
+        file_path, _ = QFileDialog.getOpenFileName(self,"Select a PDF File","","PDF Files (*.pdf)")
+        if file_path.strip() == '':
+            return None
+        self.pdf_thread=PDFThread(agent=self.agent,file_path=file_path)
+        self.pdf_thread.pdf_finished.connect(self.on_pdf_finished)
+        self.pdf_thread.start()
+
+    def on_url_clicked(self):
+        dialog = QInputDialog(self)
+        dialog.setWindowTitle("Add Knowledge URL")
+        dialog.setLabelText("Enter the URL:")
+        dialog.setTextValue("")  # Optional: default text
+        dialog.setInputMode(QInputDialog.InputMode.TextInput)
+        dialog.resize(400, dialog.sizeHint().height())
+
+        if dialog.exec():
+            url = dialog.textValue().strip()
+            if url.strip():
+                self.url_thread=URLThread(agent=self.agent,url=url)
+                self.url_thread.url_finished.connect(self.on_url_finished)
+                self.url_thread.start()
+
+    def on_pdf_finished(self,content:str):
+        QMessageBox.information(self,'PDF Knowledge Base',content)
+
+    def on_url_finished(self,content:str):
+        QMessageBox.information(self, "URL Knowledge Base", content)
+
     def on_mic_clicked(self):
         if self.stt is None:
             return None
@@ -201,6 +293,7 @@ class ChatUI(QWidget):
             self.mic_button.setDisabled(False)
 
     def on_tts_finished(self,content:str):
+        self.text_input.setPlaceholderText("How can I help you?")
         self.text_input.setPlaceholderText("How can I help you?")
         self.text_input.setDisabled(False)
         self.send_button.setDisabled(True)
